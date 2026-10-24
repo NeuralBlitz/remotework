@@ -1213,8 +1213,8 @@ wheels = [
 ]
 
 [[package]]
-name = "langchain-litellm"
-version = "0.5.1"
+name = "litellm"
+version = "1.88.66"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
