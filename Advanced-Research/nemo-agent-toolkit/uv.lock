@@ -4136,7 +4136,7 @@ wheels = [
 
 [[package]]
 name = "langchain-litellm"
-version = "0.3.5"
+version = "1.83.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "langchain-core" },
