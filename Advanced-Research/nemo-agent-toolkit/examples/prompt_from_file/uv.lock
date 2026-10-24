@@ -1214,7 +1214,7 @@ wheels = [
 
 [[package]]
 name = "litellm"
-version = "1.88.66"
+version = "1.88.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
