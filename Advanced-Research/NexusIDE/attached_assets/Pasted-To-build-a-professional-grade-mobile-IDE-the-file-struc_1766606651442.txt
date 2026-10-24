@@ -1,0 +1,54 @@
+To build a professional-grade mobile IDE, the file structure must be designed for extensibility and separation of concerns. You cannot treat it like a simple mobile app; it is a complex systems-integration project.
+Below is a granular breakdown of the directory structure for a cross-platform mobile IDE (e.g., built with React Native/C++ or Flutter/Rust).
+1. Project Root & Core Logic
+This level separates the platform-specific "shells" from the core engine.
+/root
+├── /core (C++/Rust)         # High-performance logic (LSP, Tree-sitter, Git)
+├── /src (Mobile UI)         # Frontend logic (TypeScript/Dart)
+├── /ios                     # Native iOS wrapper & Secure Enclave bridge
+├── /android                 # Native Android wrapper & NDK integrations
+└── /scripts                 # Build scripts for cross-compiling toolchains
+
+2. The /src (UI & Orchestration) Layer
+This is where the user interaction happens. It manages the "state" of the editor.
+ * /editor: Houses the main text-rendering engine.
+   * EditorView.tsx: Handles viewport virtualization (rendering only visible lines).
+   * Gutter.tsx: Displays line numbers, breakpoints, and git "diff" markers.
+   * Tokeniser.ts: Maps syntax tokens to CSS/Style objects.
+ * /components/ui: Mobile-optimized controls.
+   * AccessoryBar.tsx: The row of symbols (;, {, }) above the keyboard.
+   * CommandPalette.tsx: A searchable overlay for actions (like VS Code’s Ctrl+P).
+ * /store: State management (e.g., Redux or Zustand).
+   * editorSlice.ts: Tracks cursor position, selection ranges, and undo/redo stacks.
+   * fileTreeSlice.ts: Manages the expanded/collapsed state of folders.
+3. The /services Layer (The "Brain")
+This layer communicates with the "outside world" (the OS or Remote Servers).
+ * /lsp:
+   * LSPClient.ts: Manages the JSON-RPC connection to the language server.
+   * capabilities.ts: Defines what the IDE can do (e.g., "Go to Definition" or "Formatting").
+ * /vfs (Virtual File System):
+   * FileProvider.ts: An abstract interface.
+   * LocalProvider.ts: Implementation for on-device storage.
+   * RemoteProvider.ts: Implementation for SSH/SFTP or GitHub API.
+ * /terminal:
+   * TerminalEmulator.ts: Wraps xterm.js or a native PTY (Pseudo-Terminal) bridge.
+4. The /core or /native Layer
+For "Full Functionality," you often need native libraries for performance.
+/core
+├── /tree-sitter             # Fast incremental parsing for syntax
+├── /libgit2                 # Native C library for high-speed Git operations
+├── /pty                     # Pseudo-terminal logic for the shell
+└── /ssh                     # Libssh2 for secure remote connections
+
+5. Metadata and Assets
+ * /themes: JSON files defining colors (e.g., monokai.json, solarized-dark.json).
+ * /grammars: TextMate .tmLanguage files that define how different languages are parsed.
+ * /snippets: User-defined code shortcuts.
+How it handles a file open request:
+ * UI Layer (FileTree.tsx) triggers an event.
+ * VFS Layer (FileProvider.ts) determines if the file is local or remote.
+ * Core Layer reads the bytes and detects encoding.
+ * LSP Layer starts a background scan of the file for errors.
+ * Editor Layer renders the first 50 lines into the virtualized list.
+Next Step:
+Would you like me to provide a code snippet for the Accessory Bar component? It's often the most critical UI element for making a mobile IDE feel productive.

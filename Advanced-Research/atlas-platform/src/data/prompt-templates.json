@@ -1,0 +1,329 @@
+{
+“promptTemplates”: [
+{
+“id”: “template_001”,
+“name”: “Dynamic Task Analyzer”,
+“version”: “3.2”,
+“metaContext”: {
+“taskType”: “analysis”,
+“complexity”: 0.75,
+“requiredCapabilities”: {
+“reasoning”: 0.85,
+“creativity”: 0.60,
+“analysis”: 0.95,
+“execution”: 0.70,
+“collaboration”: 0.65
+},
+“historicalSuccessRate”: 0.89
+},
+“coreDirective”: “Analyze the provided task and decompose it into actionable sub-tasks with clear success criteria.”,
+“conditionalAugmentation”: [
+{
+“condition”: “complexity > 0.7”,
+“injection”: “Apply advanced reasoning scaffold with multi-step verification”,
+“priority”: 1
+},
+{
+“condition”: “uncertainty > 0.5”,
+“injection”: “Activate verification protocol with confidence scoring”,
+“priority”: 2
+},
+{
+“condition”: “collaboration_required == true”,
+“injection”: “Enable multi-agent coordination framework”,
+“priority”: 3
+}
+],
+“constraintBoundary”: [
+“Do not exceed 10 sub-tasks per decomposition”,
+“Ensure all sub-tasks have measurable success criteria”,
+“Maintain dependencies between related sub-tasks”,
+“Flag any sub-tasks requiring human oversight”
+],
+“outputSpecification”: {
+“format”: “json”,
+“schema”: {
+“task_id”: “string”,
+“sub_tasks”: “array”,
+“dependencies”: “object”,
+“estimated_duration”: “number”,
+“confidence_score”: “number”
+},
+“validation”: [
+“All sub-tasks must have unique IDs”,
+“Confidence scores must be between 0.0 and 1.0”,
+“Dependencies must reference valid sub-task IDs”
+]
+},
+“performanceMetrics”: {
+“taskCompletion”: 0.91,
+“efficiency”: 0.87,
+“userSatisfaction”: 0.93,
+“averageExecutionTime”: 2.4,
+“successRate”: 0.89
+}
+},
+{
+“id”: “template_002”,
+“name”: “Code Generation TDD”,
+“version”: “2.5”,
+“metaContext”: {
+“taskType”: “code_generation”,
+“complexity”: 0.82,
+“requiredCapabilities”: {
+“reasoning”: 0.88,
+“creativity”: 0.75,
+“analysis”: 0.85,
+“execution”: 0.95,
+“collaboration”: 0.70
+},
+“historicalSuccessRate”: 0.94
+},
+“coreDirective”: “Generate production-ready code following test-driven development principles with comprehensive test coverage.”,
+“conditionalAugmentation”: [
+{
+“condition”: “security_critical == true”,
+“injection”: “Apply enhanced security scanning and vulnerability assessment”,
+“priority”: 1
+},
+{
+“condition”: “performance_critical == true”,
+“injection”: “Include performance optimization and profiling steps”,
+“priority”: 2
+},
+{
+“condition”: “test_coverage < 0.8”,
+“injection”: “Generate additional edge case tests to reach 80% coverage”,
+“priority”: 3
+}
+],
+“constraintBoundary”: [
+“All functions must have type annotations”,
+“Minimum 80% test coverage required”,
+“No security vulnerabilities in generated code”,
+“Follow specified coding style guide”,
+“Include comprehensive documentation”
+],
+“outputSpecification”: {
+“format”: “structured_code”,
+“schema”: {
+“implementation”: “string”,
+“tests”: “array”,
+“documentation”: “string”,
+“security_report”: “object”,
+“coverage_report”: “object”
+}
+},
+“performanceMetrics”: {
+“taskCompletion”: 0.95,
+“efficiency”: 0.91,
+“userSatisfaction”: 0.96,
+“averageExecutionTime”: 5.2,
+“successRate”: 0.94
+}
+},
+{
+“id”: “template_003”,
+“name”: “Research Synthesis”,
+“version”: “4.1”,
+“metaContext”: {
+“taskType”: “research”,
+“complexity”: 0.88,
+“requiredCapabilities”: {
+“reasoning”: 0.95,
+“creativity”: 0.70,
+“analysis”: 0.98,
+“execution”: 0.80,
+“collaboration”: 0.85
+},
+“historicalSuccessRate”: 0.92
+},
+“coreDirective”: “Conduct comprehensive research on the given topic, verify sources, detect bias, and synthesize findings into a coherent analysis.”,
+“conditionalAugmentation”: [
+{
+“condition”: “source_count > 20”,
+“injection”: “Apply hierarchical source organization and importance ranking”,
+“priority”: 1
+},
+{
+“condition”: “controversial_topic == true”,
+“injection”: “Include balanced perspective analysis and bias detection”,
+“priority”: 2
+},
+{
+“condition”: “time_sensitive == true”,
+“injection”: “Prioritize recent sources and flag outdated information”,
+“priority”: 3
+}
+],
+“constraintBoundary”: [
+“Cite all factual claims with sources”,
+“Flag any potential misinformation”,
+“Identify and disclose bias in sources”,
+“Cross-reference key facts with multiple sources”,
+“Separate facts from interpretations”
+],
+“outputSpecification”: {
+“format”: “markdown”,
+“schema”: {
+“executive_summary”: “string”,
+“key_findings”: “array”,
+“source_analysis”: “object”,
+“citations”: “array”,
+“confidence_ratings”: “object”
+}
+},
+“performanceMetrics”: {
+“taskCompletion”: 0.93,
+“efficiency”: 0.85,
+“userSatisfaction”: 0.94,
+“averageExecutionTime”: 8.7,
+“successRate”: 0.92
+}
+},
+{
+“id”: “template_004”,
+“name”: “Creative Content Generator”,
+“version”: “3.0”,
+“metaContext”: {
+“taskType”: “creative”,
+“complexity”: 0.70,
+“requiredCapabilities”: {
+“reasoning”: 0.75,
+“creativity”: 0.98,
+“analysis”: 0.70,
+“execution”: 0.85,
+“collaboration”: 0.90
+},
+“historicalSuccessRate”: 0.88
+},
+“coreDirective”: “Generate creative content that aligns with specified style, tone, and requirements while maintaining originality and quality.”,
+“conditionalAugmentation”: [
+{
+“condition”: “multi_modal == true”,
+“injection”: “Coordinate text, visual, and layout elements cohesively”,
+“priority”: 1
+},
+{
+“condition”: “brand_guidelines_present == true”,
+“injection”: “Strict adherence to brand voice and visual identity”,
+“priority”: 2
+},
+{
+“condition”: “iterative_refinement == true”,
+“injection”: “Enable multi-round improvement based on feedback”,
+“priority”: 3
+}
+],
+“constraintBoundary”: [
+“Maintain specified tone and style consistently”,
+“Ensure content is original and not derivative”,
+“Respect cultural sensitivities”,
+“Avoid stereotypes and biases”,
+“Follow accessibility guidelines”
+],
+“outputSpecification”: {
+“format”: “multi_format”,
+“schema”: {
+“primary_content”: “string”,
+“variations”: “array”,
+“style_analysis”: “object”,
+“metadata”: “object”
+}
+},
+“performanceMetrics”: {
+“taskCompletion”: 0.89,
+“efficiency”: 0.82,
+“userSatisfaction”: 0.91,
+“averageExecutionTime”: 3.8,
+“successRate”: 0.88
+}
+},
+{
+“id”: “template_005”,
+“name”: “Meta-Cognitive Optimizer”,
+“version”: “2.1”,
+“metaContext”: {
+“taskType”: “meta_optimization”,
+“complexity”: 0.92,
+“requiredCapabilities”: {
+“reasoning”: 0.97,
+“creativity”: 0.85,
+“analysis”: 0.95,
+“execution”: 0.75,
+“collaboration”: 0.80
+},
+“historicalSuccessRate”: 0.86
+},
+“coreDirective”: “Analyze current prompt performance, identify optimization opportunities, and generate improved prompt variants.”,
+“conditionalAugmentation”: [
+{
+“condition”: “performance_degradation_detected == true”,
+“injection”: “Apply root cause analysis and corrective measures”,
+“priority”: 1
+},
+{
+“condition”: “new_task_type == true”,
+“injection”: “Generate exploratory prompt variants for testing”,
+“priority”: 2
+},
+{
+“condition”: “success_rate < 0.85”,
+“injection”: “Trigger intensive optimization and A/B testing”,
+“priority”: 3
+}
+],
+“constraintBoundary”: [
+“Maintain backward compatibility where possible”,
+“Document all changes and rationale”,
+“Test improvements before deployment”,
+“Preserve safety constraints”,
+“Track performance impact of changes”
+],
+“outputSpecification”: {
+“format”: “json”,
+“schema”: {
+“original_prompt_id”: “string”,
+“optimized_variants”: “array”,
+“predicted_improvements”: “object”,
+“testing_plan”: “object”,
+“rollback_plan”: “object”
+}
+},
+“performanceMetrics”: {
+“taskCompletion”: 0.87,
+“efficiency”: 0.79,
+“userSatisfaction”: 0.85,
+“averageExecutionTime”: 6.3,
+“successRate”: 0.86
+}
+}
+],
+“evolutionMetrics”: [
+{
+“templateId”: “template_001”,
+“generation”: 3,
+“fitness”: 0.89,
+“mutations”: [
+“Added uncertainty handling”,
+“Improved sub-task dependency tracking”,
+“Enhanced confidence scoring”
+],
+“crossoverParents”: [“template_base_001”, “template_analyzer_v2”],
+“successfulTasks”: 847,
+“failedTasks”: 104
+},
+{
+“templateId”: “template_002”,
+“generation”: 2,
+“fitness”: 0.94,
+“mutations”: [
+“Integrated security scanning”,
+“Added performance optimization checks”,
+“Enhanced test generation”
+],
+“successfulTasks”: 1203,
+“failedTasks”: 78
+}
+]
+}

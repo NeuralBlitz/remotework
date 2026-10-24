@@ -1,0 +1,119 @@
+{
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devPath": "http://localhost:5173",
+    "distDir": "../dist"
+  },
+  "package": {
+    "productName": "Mito",
+    "version": "1.0.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "all": false,
+        "open": true,
+        "execute": true,
+        "sidecar": true,
+        "scope": [
+          {
+            "name": "mito",
+            "cmd": "mito",
+            "args": true
+          }
+        ]
+      },
+      "window": {
+        "all": true
+      },
+      "fs": {
+        "all": true,
+        "scope": ["$APP/*", "$RESOURCE/*", "$DOWNLOAD/*", "$HOME/*"]
+      },
+      "path": {
+        "all": true
+      },
+      "dialog": {
+        "all": true
+      },
+      "notification": {
+        "all": true
+      },
+      "globalShortcut": {
+        "all": true
+      },
+      "systemTray": {
+        "all": true
+      },
+      "process": {
+        "all": true
+      },
+      "os": {
+        "all": true
+      },
+      "http": {
+        "all": true,
+        "scope": ["http://*", "https://*"]
+      },
+      "clipboard": {
+        "all": true
+      }
+    },
+    "bundle": {
+      "active": true,
+      "category": "Utility",
+      "copyright": "2024 Mito AI",
+      "deb": {
+        "depends": []
+      },
+      "externalBin": [],
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png",
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ],
+      "identifier": "com.mito.ai",
+      "longDescription": "Mito - The Powerhouse AI Toolkit",
+      "macOS": {
+        "entitlements": null,
+        "exceptionDomain": "",
+        "frameworks": [],
+        "providerShortName": null,
+        "signingIdentity": null
+      },
+      "resources": [],
+      "shortDescription": "AI Toolkit",
+      "targets": "all",
+      "windows": {
+        "certificateThumbprint": null,
+        "digestAlgorithm": "sha256",
+        "timestampUrl": ""
+      }
+    },
+    "security": {
+      "csp": null
+    },
+    "updater": {
+      "active": false
+    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "height": 800,
+        "resizable": true,
+        "title": "Mito AI Toolkit",
+        "width": 1200,
+        "minWidth": 800,
+        "minHeight": 600,
+        "center": true,
+        "decorations": true,
+        "transparent": false,
+        "maximized": false
+      }
+    ]
+  }
+}

@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vector-search"
+version = "0.1.0"
+description = "RAG-optimized vector search engine with Factory Pattern index strategies"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+pg = ["psycopg[binary]>=3.1"]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.23",
+    "mypy>=1.0",
+    "ruff>=0.4",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

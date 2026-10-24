@@ -1,0 +1,207 @@
+# ATLAS Agent Definitions
+
+version: “1.0.0”
+
+agents:
+research_agent:
+id: “agent_research_001”
+name: “Autonomous Research Agent”
+type: “research”
+description: “Conducts multi-step research with source verification”
+capabilities:
+reasoning: 0.95
+creativity: 0.70
+analysis: 0.98
+execution: 0.85
+collaboration: 0.80
+specialized_prompts:
+- source_verification_v2
+- cross_reference_validator_v1
+- bias_detection_v3
+- citation_graph_builder_v1
+tools:
+- web_search
+- document_retrieval
+- fact_checker
+- citation_manager
+safety_constraints:
+- verify_all_sources
+- detect_misinformation
+- cite_primary_sources
+- flag_low_confidence
+
+code_generation_agent:
+id: “agent_code_001”
+name: “Code Generation Agent”
+type: “code_generation”
+description: “Generates production-ready code with testing”
+capabilities:
+reasoning: 0.90
+creativity: 0.75
+analysis: 0.88
+execution: 0.95
+collaboration: 0.70
+specialized_prompts:
+- tdd_prompt_chain_v2
+- security_scanner_v3
+- performance_optimizer_v1
+- doc_generator_v2
+tools:
+- code_executor
+- test_runner
+- linter
+- security_scanner
+- documentation_generator
+safety_constraints:
+- scan_for_vulnerabilities
+- validate_test_coverage
+- check_code_quality
+- prevent_malicious_code
+
+creative_agent:
+id: “agent_creative_001”
+name: “Creative Collaboration Agent”
+type: “creative_collaboration”
+description: “Enables multi-modal creative content generation”
+capabilities:
+reasoning: 0.75
+creativity: 0.98
+analysis: 0.70
+execution: 0.80
+collaboration: 0.95
+specialized_prompts:
+- multimodal_composer_v2
+- style_transfer_v3
+- aesthetic_evaluator_v1
+- brainstorm_diversifier_v2
+tools:
+- image_generator
+- text_composer
+- layout_designer
+- style_analyzer
+safety_constraints:
+- content_appropriateness
+- copyright_respect
+- bias_mitigation
+- cultural_sensitivity
+
+analyst_agent:
+id: “agent_analyst_001”
+name: “Data Analyst Agent”
+type: “analyst”
+description: “Generates data interpretation prompts”
+capabilities:
+reasoning: 0.92
+creativity: 0.65
+analysis: 0.98
+execution: 0.75
+collaboration: 0.85
+specialized_prompts:
+- data_interpreter_v2
+- pattern_detector_v3
+- statistical_analyzer_v1
+- visualization_recommender_v1
+tools:
+- data_processor
+- statistical_engine
+- visualization_tool
+- anomaly_detector
+
+strategist_agent:
+id: “agent_strategist_001”
+name: “Strategic Planner Agent”
+type: “strategist”
+description: “Generates high-level planning prompts”
+capabilities:
+reasoning: 0.95
+creativity: 0.88
+analysis: 0.90
+execution: 0.70
+collaboration: 0.92
+specialized_prompts:
+- strategic_planner_v3
+- scenario_analyzer_v2
+- resource_optimizer_v1
+- risk_assessor_v2
+tools:
+- scenario_simulator
+- resource_planner
+- risk_calculator
+- optimization_engine
+
+executor_agent:
+id: “agent_executor_001”
+name: “Task Executor Agent”
+type: “executor”
+description: “Generates action execution prompts”
+capabilities:
+reasoning: 0.80
+creativity: 0.60
+analysis: 0.75
+execution: 0.98
+collaboration: 0.85
+specialized_prompts:
+- action_executor_v2
+- workflow_orchestrator_v3
+- error_recovery_v2
+- result_validator_v1
+tools:
+- task_runner
+- workflow_engine
+- error_handler
+- result_checker
+
+critic_agent:
+id: “agent_critic_001”
+name: “Quality Critic Agent”
+type: “critic”
+description: “Generates evaluation and improvement prompts”
+capabilities:
+reasoning: 0.93
+creativity: 0.70
+analysis: 0.96
+execution: 0.72
+collaboration: 0.88
+specialized_prompts:
+- quality_evaluator_v3
+- improvement_suggester_v2
+- consistency_checker_v1
+- output_validator_v2
+tools:
+- quality_checker
+- improvement_analyzer
+- consistency_validator
+- benchmark_comparator
+
+# Multi-Agent Collaboration Rules
+
+collaboration_protocols:
+research_code_pipeline:
+agents: [research_agent, code_generation_agent, critic_agent]
+workflow:
+- step: “research”
+agent: “research_agent”
+output: “requirements_document”
+- step: “implementation”
+agent: “code_generation_agent”
+input: “requirements_document”
+output: “code_artifact”
+- step: “review”
+agent: “critic_agent”
+input: “code_artifact”
+output: “quality_report”
+
+creative_strategy_pipeline:
+agents: [strategist_agent, creative_agent, analyst_agent]
+workflow:
+- step: “strategy”
+agent: “strategist_agent”
+output: “creative_brief”
+- step: “creation”
+agent: “creative_agent”
+input: “creative_brief”
+output: “creative_artifacts”
+- step: “analysis”
+agent: “analyst_agent”
+input: “creative_artifacts”
+output: “performance_predictions”

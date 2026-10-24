@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "openclaw": "^2026.4.15",
+    "openclaw": "^2026.4.8",
+    "pipx": "^1.0.1"
+  }
+}

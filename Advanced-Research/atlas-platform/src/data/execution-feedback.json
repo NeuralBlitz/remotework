@@ -1,0 +1,120 @@
+{
+“executionFeedback”: [
+{
+“taskId”: “task_2024_001_3847”,
+“promptTemplate”: “template_001_v3.2”,
+“successMetrics”: {
+“taskCompletion”: 0.95,
+“efficiency”: 0.87,
+“userSatisfaction”: 0.92,
+“averageExecutionTime”: 2.3,
+“successRate”: 0.95
+},
+“failurePoints”: [],
+“suggestedImprovements”: [
+“Consider adding parallel execution for independent sub-tasks”,
+“Optimize dependency resolution algorithm”
+],
+“timestamp”: “2024-12-15T14:32:17Z”
+},
+{
+“taskId”: “task_2024_001_3848”,
+“promptTemplate”: “template_002_v2.5”,
+“successMetrics”: {
+“taskCompletion”: 0.98,
+“efficiency”: 0.93,
+“userSatisfaction”: 0.96,
+“averageExecutionTime”: 4.8,
+“successRate”: 0.98
+},
+“failurePoints”: [],
+“suggestedImprovements”: [
+“Test generation could be more comprehensive for edge cases”
+],
+“timestamp”: “2024-12-15T15:47:22Z”
+},
+{
+“taskId”: “task_2024_001_3849”,
+“promptTemplate”: “template_003_v4.1”,
+“successMetrics”: {
+“taskCompletion”: 0.85,
+“efficiency”: 0.78,
+“userSatisfaction”: 0.88,
+“averageExecutionTime”: 12.4,
+“successRate”: 0.85
+},
+“failurePoints”: [
+“Source verification took longer than expected”,
+“Some sources had conflicting information”
+],
+“suggestedImprovements”: [
+“Add automated source reliability scoring”,
+“Implement better conflict resolution strategy”,
+“Optimize citation graph construction”
+],
+“timestamp”: “2024-12-15T16:23:45Z”
+},
+{
+“taskId”: “task_2024_001_3850”,
+“promptTemplate”: “template_004_v3.0”,
+“successMetrics”: {
+“taskCompletion”: 0.92,
+“efficiency”: 0.85,
+“userSatisfaction”: 0.94,
+“averageExecutionTime”: 3.2,
+“successRate”: 0.92
+},
+“failurePoints”: [],
+“suggestedImprovements”: [
+“Add more style variation options”,
+“Enhance multi-modal coordination”
+],
+“timestamp”: “2024-12-15T17:08:33Z”
+},
+{
+“taskId”: “task_2024_001_3851”,
+“promptTemplate”: “template_001_v3.1”,
+“successMetrics”: {
+“taskCompletion”: 0.72,
+“efficiency”: 0.68,
+“userSatisfaction”: 0.75,
+“averageExecutionTime”: 3.8,
+“successRate”: 0.72
+},
+“failurePoints”: [
+“Sub-task dependency resolution failed”,
+“Complexity estimation was inaccurate”
+],
+“suggestedImprovements”: [
+“Improve dependency cycle detection”,
+“Add better complexity estimation heuristics”,
+“Implement fallback strategies for complex tasks”
+],
+“timestamp”: “2024-12-15T18:15:11Z”
+}
+],
+“aggregateMetrics”: {
+“totalTasks”: 5,
+“averageCompletion”: 0.884,
+“averageEfficiency”: 0.822,
+“averageSatisfaction”: 0.890,
+“averageExecutionTime”: 5.3,
+“overallSuccessRate”: 0.884
+},
+“trendAnalysis”: {
+“period”: “last_24_hours”,
+“completionTrend”: “stable”,
+“efficiencyTrend”: “improving”,
+“satisfactionTrend”: “stable”,
+“commonFailurePatterns”: [
+“Source verification delays”,
+“Dependency resolution complexity”,
+“Edge case coverage gaps”
+],
+“topImprovementAreas”: [
+“Automated source reliability assessment”,
+“Enhanced dependency management”,
+“Better edge case generation”
+]
+}
+}

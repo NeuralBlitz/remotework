@@ -1,0 +1,10 @@
+run = "cowsay Configure me!"
+entrypoint = "README.md"
+modules = ["nodejs-20", "python-3.11"]
+
+[nix]
+channel = "stable-24_11"
+packages = ["cowsay", "fish", "go", "powershell", "sish", "zsh"]
+
+[agent]
+expertMode = true

@@ -1,0 +1,17 @@
+{
+  "lockfileVersion": 1,
+  "configVersion": 0,
+  "workspaces": {
+    "": {
+      "dependencies": {
+        "openclaw": "^0.0.1",
+        "pipx": "^1.0.1",
+      },
+    },
+  },
+  "packages": {
+    "openclaw": ["openclaw@0.0.1", "", {}, "sha512-RjBpKUdV8BeVBDWd3vJi4Okl7AwDwC/yKsP6tf89CQIH+B+M6J0SsxkyJqd5Kc/c4bZkJ7mWYSd4eYo4Jzc7mA=="],
+
+    "pipx": ["pipx@1.0.1", "", {}, "sha512-mp9BRGzPtW1fENFrt4rxVkdpd/oaIyOJRq7UiK9Ftuv4McvEae5gSB13W1JzsozpQdMYC3api+X0XmUL3hZziw=="],
+  }
+}

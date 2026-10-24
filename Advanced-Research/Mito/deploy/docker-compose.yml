@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  mito-api:
+    build: 
+      context: .
+      dockerfile: deploy/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - MITO_HOME=/app
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+        reservations:
+          memory: 2G
+
+  mito-worker:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
+    command: ["python", "-m", "mito", "worker"]
+    environment:
+      - MITO_HOME=/app
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+    depends_on:
+      - mito-api
+    restart: unless-stopped
+
+networks:
+  default:
+    name: mito-network

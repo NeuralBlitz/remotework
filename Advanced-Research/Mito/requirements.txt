@@ -1,0 +1,36 @@
+# Mito AI Toolkit Dependencies
+
+# Core
+torch>=2.0.0
+transformers>=4.30.0
+numpy>=1.24.0
+
+# LLMs
+llama-cpp-python>=0.1.0
+
+# Vision
+torchvision>=0.15.0
+pillow>=9.0.0
+
+# OCR
+easyocr>=1.7.0
+
+# NLP & Embeddings
+sentence-transformers>=2.2.0
+
+# API Server
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0.0
+
+# Config
+pyyaml>=6.0
+
+# Observability
+prometheus-client>=0.17.0
+
+# Utilities
+requests>=2.28.0
+
+# LRS-Agents: Resilient AI agents via Active Inference
+lrs-agents>=0.2.1

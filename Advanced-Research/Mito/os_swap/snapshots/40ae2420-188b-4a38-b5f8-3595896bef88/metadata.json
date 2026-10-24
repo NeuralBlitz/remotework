@@ -1,0 +1,9 @@
+{
+  "id": "40ae2420-188b-4a38-b5f8-3595896bef88",
+  "name": "test-snap",
+  "vm_id": "7f1502b7-f9e9-4ce0-8150-4a91d9db0d36",
+  "vm_name": "test-vm",
+  "created_at": "2026-03-08T07:54:29.776750",
+  "size_mb": 20480,
+  "description": "Test snapshot"
+}

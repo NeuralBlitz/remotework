@@ -1,0 +1,106 @@
+name: CI/CD & Auto-Sync Template
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */6 * * *'  # Every 6 hours
+
+permissions:
+  contents: write
+
+jobs:
+  test-and-build:
+    name: Test & Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup environment
+        run: |
+          # Add your setup commands here
+          # e.g., python -m pip install --upgrade pip
+          #       pip install -r requirements.txt
+          echo "Setup complete"
+      
+      - name: Run tests
+        run: |
+          # Add your test commands here
+          # e.g., pytest, npm test, go test ./...
+          echo "Tests passed"
+      
+      - name: Build
+        run: |
+          # Add your build commands here
+          echo "Build complete"
+
+  sync-to-monorepo:
+    name: Sync to Advanced-Research Monorepo
+    needs: test-and-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Checkout monorepo
+        uses: actions/checkout@v4
+        with:
+          repository: NeuralBlitz/Advanced-Research
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: monorepo
+          fetch-depth: 0
+      
+      - name: Setup git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      
+      - name: Sync changes to monorepo
+        run: |
+          REPO_NAME="${{ github.repository }}"
+          SHORT_NAME=$(echo "$REPO_NAME" | cut -d'/' -f2)
+          
+          cd monorepo
+          
+          # Remove existing directory content (except .git)
+          find "$SHORT_NAME" -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} + 2>/dev/null || true
+          mkdir -p "$SHORT_NAME"
+          
+          # Copy all files from this repo
+          rsync -av --exclude='.git' --exclude='.github' ../ "$SHORT_NAME/"
+          
+          # Commit if changes
+          if [ -n "$(git status --porcelain)" ]; then
+            git add "$SHORT_NAME/"
+            git commit -m "Auto-sync from $REPO_NAME: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git push origin main
+            echo "✓ Synced $SHORT_NAME to Advanced-Research monorepo"
+          else
+            echo "No changes to sync for $SHORT_NAME"
+          fi
+
+  release:
+    name: Create Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Generate changelog
+        run: |
+          # Auto-generate changelog from commits
+          git log --pretty=format:"- %s (%an)" $(git describe --tags --abbrev=0 HEAD^)..HEAD > CHANGELOG.md
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            CHANGELOG.md
+          generate_release_notes: true

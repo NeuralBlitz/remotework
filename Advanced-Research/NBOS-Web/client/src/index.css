@@ -1,0 +1,142 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+@import "katex/dist/katex.min.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* HSL Color System - Cyberpunk Palette */
+  --background: 260 50% 5%; /* Deep void purple-black */
+  --foreground: 180 100% 90%; /* Cyan-tinted white */
+  
+  --primary: 180 100% 50%; /* Neon Cyan #00f0ff */
+  --primary-foreground: 260 50% 5%;
+  
+  --secondary: 280 100% 50%; /* Electric Purple #bc13fe */
+  --secondary-foreground: 210 40% 98%;
+  
+  --muted: 260 30% 15%;
+  --muted-foreground: 180 20% 60%;
+  
+  --accent: 320 100% 50%; /* Neon Pink accent */
+  --accent-foreground: 210 40% 98%;
+  
+  --destructive: 0 100% 60%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 180 50% 20%;
+  --input: 180 30% 10%;
+  --ring: 180 100% 50%;
+  
+  --radius: 0px; /* Cyberpunk is sharp */
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground antialiased selection:bg-primary selection:text-black overflow-x-hidden;
+    font-family: 'Rajdhani', sans-serif;
+    background-image: 
+      linear-gradient(rgba(18, 16, 30, 0.95), rgba(18, 16, 30, 0.95)),
+      linear-gradient(0deg, transparent 24%, rgba(0, 240, 255, 0.03) 25%, rgba(0, 240, 255, 0.03) 26%, transparent 27%, transparent 74%, rgba(0, 240, 255, 0.03) 75%, rgba(0, 240, 255, 0.03) 76%, transparent 77%, transparent),
+      linear-gradient(90deg, transparent 24%, rgba(0, 240, 255, 0.03) 25%, rgba(0, 240, 255, 0.03) 26%, transparent 27%, transparent 74%, rgba(0, 240, 255, 0.03) 75%, rgba(0, 240, 255, 0.03) 76%, transparent 77%, transparent);
+    background-size: 100% 100%, 50px 50px, 50px 50px;
+  }
+
+  @media (max-width: 640px) {
+    body {
+      font-size: 14px;
+    }
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Orbitron', sans-serif;
+    @apply tracking-wider uppercase;
+  }
+
+  @media (max-width: 640px) {
+    h1 {
+      @apply text-2xl;
+    }
+    h2 {
+      @apply text-xl;
+    }
+    h3 {
+      @apply text-lg;
+    }
+  }
+
+  code, pre {
+    font-family: 'Fira Code', monospace;
+  }
+}
+
+@layer utilities {
+  .text-glow {
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.7), 0 0 20px rgba(0, 240, 255, 0.5);
+  }
+  
+  .border-glow {
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.3), inset 0 0 10px rgba(0, 240, 255, 0.1);
+  }
+  
+  .glass-panel {
+    @apply bg-background/60 backdrop-blur-md border border-primary/20;
+  }
+  
+  .cyber-card {
+    @apply relative border border-primary/30 bg-black/40 overflow-hidden transition-all duration-300;
+  }
+  
+  .cyber-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    border-top: 2px solid var(--primary);
+    border-left: 2px solid var(--primary);
+    transition: all 0.3s ease;
+  }
+  
+  .cyber-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    border-bottom: 2px solid var(--primary);
+    border-right: 2px solid var(--primary);
+    transition: all 0.3s ease;
+  }
+  
+  .cyber-card:hover {
+    @apply border-primary/60 shadow-[0_0_15px_rgba(0,240,255,0.15)];
+  }
+
+  .cyber-card:hover::before, .cyber-card:hover::after {
+    width: 100%;
+    height: 100%;
+    border-color: rgba(0, 240, 255, 0.5);
+    opacity: 0.5;
+  }
+
+  .scanline {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      to bottom,
+      transparent 50%,
+      rgba(0, 0, 0, 0.2) 51%
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.15;
+  }
+}

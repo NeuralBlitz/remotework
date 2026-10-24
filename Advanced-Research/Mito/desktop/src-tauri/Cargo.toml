@@ -1,0 +1,36 @@
+[package]
+name = "mito-desktop"
+version = "1.0.0"
+description = "Mito AI Toolkit - Desktop Application"
+authors = ["Mito Team"]
+license = "MIT"
+repository = ""
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "1.5", features = [] }
+
+[dependencies]
+tauri = { version = "1.6", features = ["shell-open", "dialog-all", "notification-all", "global-shortcut-all", "system-tray", "clipboard-all", "process-all", "os-all", "http-all", "path-all", "fs-all", "window-all"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
+uuid = { version = "1.0", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+dirs = "5.0"
+anyhow = "1.0"
+thiserror = "1.0"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

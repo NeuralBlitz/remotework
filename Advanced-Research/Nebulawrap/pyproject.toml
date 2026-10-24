@@ -1,0 +1,17 @@
+[project]
+name = "nebulawrap"
+version = "0.1.0"
+description = "NebulaWrap — provider-agnostic LLM wrapper SDK with provenance, safety, streaming, and prompt testing."
+authors = [{name="David Riggs", email="nuralnexus@icloud.com"}]
+license = "MIT"
+readme = "README.md"
+
+[project.dependencies]
+python = ">=3.10"
+httpx = "^0.24.0"
+pydantic = "^1.10.2"
+pytest = {version="^7.0", optional=true}
+sqlitedict = "^2.0.0"
+
+[project.scripts]
+nebulawrap = "nebulawrap.cli:main"

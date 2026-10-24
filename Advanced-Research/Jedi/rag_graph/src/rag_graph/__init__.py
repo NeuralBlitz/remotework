@@ -1,0 +1,1 @@
+"""GraphRAG System - Bridge Pattern."""

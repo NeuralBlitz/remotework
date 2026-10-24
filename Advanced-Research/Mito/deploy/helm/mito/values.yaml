@@ -1,0 +1,147 @@
+apiVersion: v2
+name: mito
+description: Mito AI Toolkit Helm Chart
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+
+dependencies:
+  - name: common
+    version: "1.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+  - name: redis
+    version: "17.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled
+
+values:
+  replicaCount: 2
+  
+  image:
+    repository: mitoai/mito
+    pullPolicy: IfNotPresent
+    tag: "latest"
+  
+  imagePullSecrets: []
+  nameOverride: ""
+  fullnameOverride: ""
+  
+  serviceAccount:
+    create: true
+    annotations: {}
+    name: ""
+  
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+  
+  podSecurityContext:
+    runAsNonRoot: true
+    fsGroup: 1000
+  
+  securityContext:
+    capabilities:
+      drop:
+      - ALL
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+  
+  service:
+    type: ClusterIP
+    port: 8000
+    targetPort: 8000
+  
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - host: mito.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: mito-tls
+        hosts:
+          - mito.example.com
+  
+  resources:
+    limits:
+      cpu: 4000m
+      memory: 8Gi
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  
+  nodeSelector: {}
+  
+  tolerations: []
+  
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: mito
+            topologyKey: kubernetes.io/hostname
+  
+  env:
+    - name: MITO_ENV
+      value: "production"
+    - name: LOG_LEVEL
+      value: "info"
+    - name: REDIS_HOST
+      value: "{{ .Release.Name }}-redis"
+    - name: REDIS_PORT
+      value: "6379"
+  
+  persistence:
+    enabled: true
+    storageClass: "standard"
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+  
+  redis:
+    enabled: true
+    architecture: replication
+    auth:
+      enabled: true
+    master:
+      persistence:
+        enabled: true
+        size: 8Gi
+  
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: 30s
+  
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 8000
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: 8000
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3

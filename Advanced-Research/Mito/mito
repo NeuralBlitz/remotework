@@ -1,0 +1,759 @@
+#!/usr/bin/env python3
+"""
+Mito - The Powerhouse CLI
+A unified interface for all AI tools in the ecosystem.
+"""
+
+import argparse
+import sys
+import os
+import json
+
+VERSION = "1.0.1"
+
+TOOLS = {
+    "llama": {"desc": "Llama LLM inference"},
+    "ocr": {"desc": "OCR text recognition from images"},
+    "textgen": {"desc": "Text generation with transformers"},
+    "classify": {"desc": "Image classification"},
+    "sentiment": {"desc": "Sentiment & emotion analysis"},
+    "speech": {"desc": "Speech recognition (Whisper)"},
+    "translate": {"desc": "Translation"},
+    "embed": {"desc": "Text embeddings"},
+    "summarize": {"desc": "Text summarization"},
+    "qa": {"desc": "Question answering"},
+    "tts": {"desc": "Text-to-speech"},
+    "rag": {"desc": "RAG question answering"},
+    "agent": {"desc": "ReAct agent (plain)"},
+    "lrs-agent": {"desc": "LRS agent (Active Inference, resilient)"},
+    "plan": {"desc": "Multi-step planner agent"},
+    "build": {"desc": "Code generation agent"},
+    "chat": {"desc": "Interactive chat"},
+    "server": {"desc": "Start API server"},
+}
+
+
+def _load_agent_tools(enabled_plugins=None):
+    """Load real tools from python.ai modules and plugin integrations."""
+    from agents import Tool
+
+    tools = []
+
+    def safe_tool(name, desc, func, schema=None):
+        try:
+            tools.append(Tool(
+                name=name,
+                description=desc,
+                func=func,
+                input_schema=schema or {"type": "object"},
+                tags=["builtin"],
+            ))
+        except Exception:
+            pass
+
+    def _extract_from_thought(tool_name: str, thought: str) -> dict:
+        """Extract meaningful parameters from the full thought text for a specific tool."""
+        lines = [l.strip() for l in thought.split("\n") if l.strip()]
+        result = {}
+
+        for line in lines:
+            if tool_name in line.lower():
+                continue
+            for kw in ("text:", "prompt:", "expr:", "question:", "context:"):
+                if kw in line.lower():
+                    val = line.lower().split(kw, 1)[1].strip().strip("'\"").strip()
+                    key = kw.rstrip(":")
+                    result[key] = val
+
+        if "input" in thought and not result:
+            input_start = thought.lower().find("input")
+            if input_start >= 0:
+                snippet = thought[input_start:input_start + 300]
+                for sep in [",", "\n", ". "]:
+                    if sep in snippet:
+                        val = snippet.split(sep, 1)[0].split("input", 1)[1].strip().strip(":\'\"").strip()
+                        if val and len(val) > 1:
+                            result["text"] = val
+                            break
+
+        return result
+
+    def textgen_tool(**kwargs) -> str:
+        from python.ai import TextGenerator
+        prompt = kwargs.get("prompt") or kwargs.get("input") or kwargs.get("text") or ""
+        model = kwargs.get("model") or "gpt2"
+        max_length = int(kwargs.get("max_length") or 200)
+        if len(prompt) < 5:
+            prompt = "Respond to the user's request."
+        gen = TextGenerator(model_name=model)
+        return gen.generate_single(prompt, max_length=max_length)
+
+    def summarize_tool(**kwargs) -> str:
+        from python.ai.summarize import Summarizer
+        text = kwargs.get("text") or kwargs.get("input") or ""
+        max_length = int(kwargs.get("max_length") or 130)
+        if len(text) < 10:
+            return "[No text to summarize]"
+        summ = Summarizer()
+        return summ.summarize(text, max_length=max_length)
+
+    def sentiment_tool(**kwargs) -> str:
+        from python.ai.sentiment import quick_sentiment
+        text = kwargs.get("text") or kwargs.get("input") or ""
+        if len(text) < 2:
+            return "[No text for sentiment analysis]"
+        result = quick_sentiment(text)
+        return f"Sentiment: {result['label']} ({result['score']:.4f})"
+
+    def embed_tool(**kwargs) -> str:
+        from python.ai.embeddings import Embedder
+        text = kwargs.get("text") or kwargs.get("input") or ""
+        model = kwargs.get("model") or "sentence-transformers/all-MiniLM-L6-v2"
+        if len(text) < 2:
+            return "[No text for embedding]"
+        embedder = Embedder(model_name=model)
+        emb = embedder.embed(text)
+        return f"Embedding dimension: {len(emb)}, first 5: {emb[:5]}"
+
+    def calc_tool(**kwargs) -> str:
+        expr = kwargs.get("expr") or kwargs.get("input") or ""
+        import re
+        numbers = re.findall(r'-?\d+\.?\d*', expr)
+        ops = re.findall(r'[+\-*/^%]', expr)
+        if not numbers:
+            numbers = re.findall(r'\d+', expr)
+        if numbers and ops:
+            clean = ''.join(c for c in expr if c.isdigit() or c in '+-*/.() ' or c == '**')
+            try:
+                result = eval(clean)
+                return str(result)
+            except Exception:
+                pass
+        if numbers:
+            if len(numbers) >= 2 and ops:
+                a, b = float(numbers[0]), float(numbers[1])
+                op = ops[0] if ops else '+'
+                if op == '+': return str(a + b)
+                if op == '-': return str(a - b)
+                if op == '*': return str(a * b)
+                if op == '/': return str(a / b if b else "division by zero")
+        return f"[Could not extract calculation from: {expr[:100]}]"
+
+    def qa_tool(**kwargs) -> str:
+        from python.ai.qa import QAModel
+        question = kwargs.get("question") or kwargs.get("input") or ""
+        context = kwargs.get("context") or ""
+        if not question:
+            return "[No question provided]"
+        if not context:
+            context = question
+        qa = QAModel()
+        result = qa.answer(question, context)
+        return f"Answer: {result['answer']} (score: {result['score']:.4f})"
+
+    safe_tool("textgen", "Generate text using an LLM", textgen_tool,
+              {"type": "object", "properties": {
+                  "prompt": {"type": "string"},
+                  "model": {"type": "string"},
+                  "max_length": {"type": "integer"}
+              }, "required": ["prompt"]})
+
+    safe_tool("summarize", "Summarize long text", summarize_tool,
+              {"type": "object", "properties": {
+                  "text": {"type": "string"},
+                  "max_length": {"type": "integer"}
+              }, "required": ["text"]})
+
+    safe_tool("sentiment", "Analyze sentiment of text", sentiment_tool,
+              {"type": "object", "properties": {
+                  "text": {"type": "string"}
+              }, "required": ["text"]})
+
+    safe_tool("embed", "Create text embeddings", embed_tool,
+              {"type": "object", "properties": {
+                  "text": {"type": "string"},
+                  "model": {"type": "string"}
+              }, "required": ["text"]})
+
+    safe_tool("calculator", "Evaluate mathematical expressions", calc_tool,
+              {"type": "object", "properties": {
+                  "expr": {"type": "string"}
+              }, "required": ["expr"]})
+
+    safe_tool("qa", "Answer questions given context", qa_tool,
+              {"type": "object", "properties": {
+                  "question": {"type": "string"},
+                  "context": {"type": "string"}
+              }, "required": ["question", "context"]})
+
+    enabled_plugins = enabled_plugins or []
+    plugin_tools = _load_plugin_tools(enabled_plugins)
+    tools.extend(plugin_tools)
+
+    return tools
+
+
+def _load_plugin_tools(plugin_names):
+    """Load tools from named plugin integrations."""
+    from agents import Tool
+
+    tools = []
+
+    def safe_tool(name, desc, func, schema=None):
+        try:
+            tools.append(Tool(
+                name=name,
+                description=desc,
+                func=func,
+                input_schema=schema or {"type": "object"},
+                tags=["plugin"],
+            ))
+        except Exception:
+            pass
+
+    plugin_map = {
+        "file_ops": ("plugins.integrations.file_ops", "file_ops_plugin"),
+        "web_search": ("plugins.integrations.web_search", "web_search_plugin"),
+        "database": ("plugins.integrations.database", "database_plugin"),
+        "git_ops": ("plugins.integrations.git_ops", "git_ops_plugin"),
+        "shell": ("plugins.integrations.shell", "shell_plugin"),
+        "http_api": ("plugins.integrations.http_api", "http_api_plugin"),
+        "json_ops": ("plugins.integrations.json_ops", "json_ops_plugin"),
+        "env_ops": ("plugins.integrations.env_ops", "env_ops_plugin"),
+    }
+
+    if "all" in plugin_names:
+        plugin_names = list(plugin_map.keys())
+
+    loaded = []
+    for name in plugin_names:
+        if name not in plugin_map:
+            print(f"Warning: Unknown plugin '{name}'", file=sys.stderr)
+            continue
+        mod_path, plugin_attr = plugin_map[name]
+        try:
+            mod = __import__(mod_path, fromlist=[plugin_attr])
+            plugin_obj = getattr(mod, plugin_attr)
+            meta = plugin_obj.get("metadata", {})
+            register_fn = plugin_obj.get("register")
+
+            class FakePlugin:
+                def __init__(self):
+                    self._commands = {}
+                def register_command(self, cmd_name, cmd_func):
+                    self._commands[cmd_name] = cmd_func
+                def set_resource(self, key, val):
+                    setattr(self, key, val)
+                def get_commands(self):
+                    return self._commands
+
+            fp = FakePlugin()
+            if register_fn:
+                register_fn(fp)
+            for cmd_name, cmd_func in fp.get_commands().items():
+                safe_tool(cmd_name, f"[{name}] {cmd_name}", cmd_func,
+                          {"type": "object", "properties": {}})
+            loaded.append(name)
+        except Exception as e:
+            print(f"Warning: Failed to load plugin '{name}': {e}", file=sys.stderr)
+
+    if loaded:
+        print(f"[plugins] Loaded: {', '.join(loaded)}")
+
+    return tools
+
+
+def cmd_llama(args):
+    from python.ai.llama import LlamaModel
+    model = LlamaModel(args.model, n_ctx=args.ctx or 2048, n_threads=args.threads or 4, verbose=False)
+    model.load()
+    result = model.generate(args.prompt, max_tokens=args.tokens or 128, temperature=args.temp or 0.7)
+    print(result["choices"][0]["text"])
+
+
+def cmd_ocr(args):
+    from python.ai.ocr import OCREngine
+    engine = OCREngine(languages=['en'])
+    results = engine.read_text(args.image)
+    for r in results:
+        print(f"{r['text']} ({r['confidence']*100:.1f}%)")
+
+
+def cmd_textgen(args):
+    from python.ai import TextGenerator
+    gen = TextGenerator(model_name=args.model or "gpt2")
+    result = gen.generate_single(args.prompt, max_length=args.tokens or 100)
+    print(result)
+
+
+def cmd_classify(args):
+    from python.ai.image_classify import ImageClassifier
+    classifier = ImageClassifier()
+    results = classifier.classify(args.image, top_k=args.top_k or 5)
+    for r in results:
+        print(f"  {r['label']}: {r['score']:.4f}")
+
+
+def cmd_sentiment(args):
+    from python.ai.sentiment import quick_sentiment, quick_emotion
+    result = quick_sentiment(args.text)
+    print(f"Sentiment: {result['label']} ({result['score']:.4f})")
+    print(f"Emotion: {quick_emotion(args.text)}")
+
+
+def cmd_speech(args):
+    from python.ai.speech import SpeechRecognizer
+    recognizer = SpeechRecognizer(model_name=args.model or "base")
+    result = recognizer.get_text(args.audio)
+    print(result)
+
+
+def cmd_translate(args):
+    from python.ai.translate import Translator
+    trans = Translator(model_name=args.model or "Helsinki-NLP/opus-mt-en-es")
+    result = trans.translate(args.text)
+    print(result)
+
+
+def cmd_embed(args):
+    from python.ai.embeddings import Embedder
+    embedder = Embedder(model_name=args.model or "sentence-transformers/all-MiniLM-L6-v2")
+    emb = embedder.embed(args.text)
+    print(f"Embedding dimension: {len(emb)}")
+    print(f"First 5 values: {emb[:5]}")
+
+
+def cmd_summarize(args):
+    from python.ai.summarize import Summarizer
+    summ = Summarizer()
+    result = summ.summarize(args.text, max_length=args.max_length or 130)
+    print(result)
+
+
+def cmd_qa(args):
+    from python.ai.qa import QAModel
+    qa = QAModel()
+    result = qa.answer(args.question, args.context)
+    print(f"Answer: {result['answer']}")
+    print(f"Score: {result['score']:.4f}")
+
+
+def cmd_tts(args):
+    from python.ai.tts import TTSEngine
+    tts = TTSEngine()
+    output = tts.speak(args.text, args.output or "speech.wav")
+    print(f"Saved to: {output}")
+
+
+def cmd_rag(args):
+    from agents.rag import RAG, Document
+    rag = RAG()
+    if args.add:
+        docs = args.add.split("|")
+        rag.add_documents(docs)
+    if args.query:
+        result = rag.query(args.query)
+        print(f"Q: {result['question']}")
+        print(f"A: {result['answer']}")
+        print(f"Sources: {len(result['sources'])}")
+    if args.save:
+        rag.vector_store.save(args.save)
+
+
+def cmd_agent(args):
+    """Plain ReAct agent with loaded tools."""
+    tools = _load_agent_tools(enabled_plugins=args.plugins)
+    if not tools:
+        print("Error: No tools available. Check python.ai module imports.", file=sys.stderr)
+        sys.exit(1)
+
+    from agents import ReActAgent, Tool
+
+    model = args.model or "gpt2"
+    max_iters = args.max_iterations or 5
+
+    agent = ReActAgent(
+        name="MitoAgent",
+        role="General AI assistant",
+        tools=tools,
+        model=model,
+    )
+
+    print(f"[agent] Running with {len(tools)} tools | model={model} | max_iterations={max_iters}")
+    print(f"[agent] Tools: {', '.join(t.name for t in tools)}\n")
+
+    result = agent.run(args.task, max_iterations=max_iters)
+    print(result)
+
+    if args.metrics:
+        print(f"\n--- Metrics ---")
+        m = agent.get_metrics()
+        print(f"  Tasks completed: {m.get('tasks_completed', 0)}")
+        print(f"  Errors: {m.get('errors', 0)}")
+        print(f"  State: {m.get('state', 'unknown')}")
+        mem = m.get('memory', {})
+        print(f"  Memory: {mem.get('short_term_count', 0)} short + {mem.get('long_term_count', 0)} long")
+
+
+def cmd_lrs_agent(args):
+    """LRS agent (Active Inference) with precision tracking and automatic adaptation."""
+    tools = _load_agent_tools(enabled_plugins=args.plugins)
+    if not tools:
+        print("Error: No tools available. Check python.ai module imports.", file=sys.stderr)
+        sys.exit(1)
+
+    from agents import LRSReActAgent
+
+    model = args.model or "gpt2"
+    max_iters = args.max_iterations or 5
+    num_proposals = args.lrs_proposals or 5
+    precision_threshold = args.lrs_threshold or 0.4
+    adaptation = not args.no_adaptation
+    preferences = {"success": args.pref_success or 5.0, "error": args.pref_error or -3.0}
+
+    try:
+        agent = LRSReActAgent(
+            name="MitoLRS",
+            role="Resilient AI assistant (Active Inference)",
+            tools=tools,
+            model=model,
+            num_proposals=num_proposals,
+            precision_threshold=precision_threshold,
+            adaptation_enabled=adaptation,
+            preferences=preferences,
+        )
+    except ImportError as e:
+        print(f"Error: lrs-agents not installed. Run: pip install lrs-agents", file=sys.stderr)
+        print(f"Detail: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"[lrs-agent] Active Inference agent | {len(tools)} tools | model={model}")
+    print(f"[lrs-agent] Proposals: {num_proposals} | Precision threshold: {precision_threshold}")
+    print(f"[lrs-agent] Adaptation: {'enabled' if adaptation else 'disabled'} | Preferences: {preferences}")
+    print(f"[lrs-agent] Tools: {', '.join(t.name for t in tools)}\n")
+
+    result = agent.run(args.task, max_iterations=max_iters)
+    print(result)
+
+    if args.metrics or args.verbose:
+        lrs = agent.get_lrs_metrics()
+        print(f"\n--- LRS Metrics ---")
+        print(f"  Version: {lrs.get('lrs_version', 'n/a')}")
+        print(f"  Adaptation count: {lrs.get('adaptation_count', 0)}")
+        prec = lrs.get('precision', {})
+        if isinstance(prec, dict):
+            for level, val in prec.items():
+                print(f"  Precision [{level}]: {val:.4f}")
+        elif isinstance(prec, (int, float)):
+            print(f"  Precision: {prec:.4f}")
+        print(f"  Proposals generated: {lrs.get('proposals_generated', 0)}")
+        selected = lrs.get('selected_policy', {})
+        if selected.get('tool'):
+            print(f"  Selected policy: {selected.get('tool')} (G={selected.get('g_value', 0):.4f})")
+        failed = lrs.get('failed_tools', {})
+        if failed:
+            print(f"  Failed tools: {failed}")
+        lens_stats = lrs.get('tool_lens_stats', {})
+        if lens_stats:
+            print(f"  Tool lens stats:")
+            for name, stats in lens_stats.items():
+                print(f"    {name}: calls={stats.get('call_count', 0)}, "
+                      f"failures={stats.get('failure_count', 0)}, "
+                      f"success_rate={stats.get('success_rate', 0):.2f}")
+
+        if args.verbose and lrs.get('precision_history'):
+            print(f"\n--- Precision History ({len(lrs['precision_history'])} events) ---")
+            for ev in lrs['precision_history'][-5:]:
+                print(f"  [{ev.get('level')}] {ev.get('old_precision', 0):.3f} -> "
+                      f"{ev.get('new_precision', 0):.3f} | {ev.get('reason', '')}")
+
+
+def cmd_plan(args):
+    """Plan agent: decompose goals into structured multi-step plans."""
+    from agents import PlannerAgent
+
+    agent = PlannerAgent(name=args.name or "Planner")
+
+    print(f"[plan] Creating plan for: {args.goal}\n")
+
+    steps = agent.plan(
+        goal=args.goal,
+        constraints=args.constraint if args.constraint else None,
+        custom_steps=args.steps if args.steps else None,
+    )
+
+    print("=== Plan ===")
+    for step in steps:
+        status_icon = {"pending": "○", "completed": "●", "failed": "✗"}.get(step.get("status"), "?")
+        print(f"  {status_icon} Step {step['step']}: {step['action']}")
+
+    if args.execute:
+        print(f"\n[plan] Executing plan...")
+        result = agent.execute_plan(plan_index=0)
+        print(f"\n=== Execution Result ===")
+        print(f"  Goal: {result.get('goal', '')}")
+        print(f"  Completed: {result.get('completed', False)}")
+        completed = sum(1 for s in result.get('steps', []) if s.get('status') == 'completed')
+        print(f"  Steps completed: {completed}/{len(result.get('steps', []))}")
+
+    if args.metrics:
+        print(f"\n--- Metrics ---")
+        status = agent.get_plan_status(0)
+        print(f"  Goal: {status.get('goal', '')}")
+        print(f"  Status: {status.get('status', '')}")
+        print(f"  Progress: {status.get('progress', '')}")
+
+
+def cmd_build(args):
+    """Build agent: generate, review, and refactor code."""
+    from agents import CodeAgent
+
+    language = args.language or "python"
+    agent = CodeAgent(name=args.name or "Builder")
+
+    if args.review:
+        print(f"[build] Reviewing code from: {args.review}\n")
+        try:
+            with open(args.review, 'r') as f:
+                code = f.read()
+        except Exception as e:
+            print(f"Error reading file: {e}", file=sys.stderr)
+            sys.exit(1)
+
+        issues = agent.review(code, language=language)
+        print(f"=== Code Review ({language}) ===")
+        if not issues:
+            print("  No issues found.")
+        else:
+            for issue in issues:
+                icon = {"warning": "⚠", "error": "✗", "info": "ℹ", "style": "💡"}.get(issue.get('type', ''), '?')
+                print(f"  {icon} [{issue.get('type', '?').upper()}] Line {issue.get('line', 0)}: {issue.get('message', '')}")
+
+    elif args.refactor:
+        print(f"[build] Refactoring code from: {args.refactor} (strategy: {args.strategy})\n")
+        try:
+            with open(args.refactor, 'r') as f:
+                code = f.read()
+        except Exception as e:
+            print(f"Error reading file: {e}", file=sys.stderr)
+            sys.exit(1)
+
+        result = agent.refactor(code, strategy=args.strategy or "extract")
+        print(f"=== Refactored Code ===\n{result}")
+
+    else:
+        print(f"[build] Generating {language} code for: {args.prompt}\n")
+        code = agent.generate(args.prompt, language=language)
+        print(f"=== Generated {language} Code ===\n{code}")
+
+
+def cmd_chat(args):
+    import subprocess
+    subprocess.run(["./scripts/chat.sh", args.model or "model.gguf"])
+
+
+def cmd_server(args):
+    import uvicorn
+    from server import api
+    uvicorn.run(api.app, host=args.host or "0.0.0.0", port=args.port or 8000)
+
+
+def cmd_list(args):
+    print(f"Mito v{VERSION} - The Powerhouse CLI\n")
+    print("Available tools:")
+    print("-" * 50)
+    for name, info in TOOLS.items():
+        print(f"  {name:14} - {info['desc']}")
+    print("\nExamples:")
+    print("  mito chat model.gguf")
+    print("  mito llama model.gguf 'Hello!'")
+    print("  mito sentiment 'I love this!'")
+    print("  mito ocr image.png")
+    print("  mito agent 'Summarize this text and check sentiment'")
+    print("  mito lrs-agent 'Write code to fetch API data' --lrs-proposals 7 --verbose")
+    print("  mito agent 'Find all Python files and count lines' --plugins file_ops all")
+    print("  mito agent 'Search the web for latest news' --plugins web_search")
+    print("  mito plan 'Build a web app' --execute")
+    print("  mito build 'Implement quicksort' --language go")
+    print("  mito build --review main.py")
+
+
+def main():
+    parser = argparse.ArgumentParser(prog="mito", description="Mito - The Powerhouse CLI")
+    parser.add_argument("-v", "--version", action="store_true", help="Show version")
+    parser.add_argument("-l", "--list", action="store_true", help="List all tools")
+
+    subparsers = parser.add_subparsers(dest="command", help="Command to run")
+
+    # --- Llama ---
+    p = subparsers.add_parser("llama", help="Run Llama inference")
+    p.add_argument("model")
+    p.add_argument("prompt")
+    p.add_argument("--tokens", type=int)
+    p.add_argument("--temp", type=float)
+    p.add_argument("--ctx", type=int)
+    p.add_argument("-t", "--threads", type=int)
+
+    # --- OCR ---
+    p = subparsers.add_parser("ocr", help="OCR text recognition")
+    p.add_argument("image")
+
+    # --- Textgen ---
+    p = subparsers.add_parser("textgen", help="Text generation")
+    p.add_argument("prompt", nargs="+")
+    p.add_argument("--model")
+    p.add_argument("--tokens", type=int)
+
+    # --- Classify ---
+    p = subparsers.add_parser("classify", help="Image classification")
+    p.add_argument("image")
+    p.add_argument("--top-k", type=int, default=5)
+
+    # --- Sentiment ---
+    p = subparsers.add_parser("sentiment", help="Sentiment analysis")
+    p.add_argument("text", nargs="+")
+
+    # --- Speech ---
+    p = subparsers.add_parser("speech", help="Speech recognition")
+    p.add_argument("audio")
+    p.add_argument("--model", default="base")
+
+    # --- Translate ---
+    p = subparsers.add_parser("translate", help="Translation")
+    p.add_argument("text", nargs="+")
+    p.add_argument("--model")
+
+    # --- Embed ---
+    p = subparsers.add_parser("embed", help="Text embeddings")
+    p.add_argument("text", nargs="+")
+    p.add_argument("--model")
+
+    # --- Summarize ---
+    p = subparsers.add_parser("summarize", help="Text summarization")
+    p.add_argument("text", nargs="+")
+    p.add_argument("--max-length", type=int, default=130)
+
+    # --- QA ---
+    p = subparsers.add_parser("qa", help="Question answering")
+    p.add_argument("question")
+    p.add_argument("context", nargs="+")
+
+    # --- TTS ---
+    p = subparsers.add_parser("tts", help="Text-to-speech")
+    p.add_argument("text", nargs="+")
+    p.add_argument("--output", "-o")
+
+    # --- RAG ---
+    p = subparsers.add_parser("rag", help="RAG question answering")
+    p.add_argument("--query")
+    p.add_argument("--add")
+    p.add_argument("--save")
+
+    # --- Agent (plain ReAct) ---
+    p = subparsers.add_parser("agent", help="ReAct agent (plain)")
+    p.add_argument("task")
+    p.add_argument("--model")
+    p.add_argument("--max-iterations", type=int)
+    p.add_argument("--metrics", action="store_true", help="Show execution metrics")
+    p.add_argument("--plugins", nargs="+", default=[],
+                   help="Load plugins: file_ops, web_search, database, git_ops, shell, http_api, json_ops, env_ops, all")
+
+    # --- LRS Agent (Active Inference) ---
+    p = subparsers.add_parser("lrs-agent", help="LRS agent (Active Inference, resilient)")
+    p.add_argument("task")
+    p.add_argument("--model")
+    p.add_argument("--max-iterations", type=int)
+    p.add_argument("--lrs-proposals", type=int, help="Number of policy proposals per step (default: 5)")
+    p.add_argument("--lrs-threshold", type=float, help="Precision threshold for adaptation (default: 0.4)")
+    p.add_argument("--no-adaptation", action="store_true", help="Disable automatic adaptation")
+    p.add_argument("--pref-success", type=float, help="Reward weight for success (default: 5.0)")
+    p.add_argument("--pref-error", type=float, help="Penalty weight for error (default: -3.0)")
+    p.add_argument("--metrics", action="store_true", help="Show LRS metrics")
+    p.add_argument("--verbose", action="store_true", help="Show detailed precision history")
+    p.add_argument("--plugins", nargs="+", default=[],
+                   help="Load plugins: file_ops, web_search, database, git_ops, shell, http_api, json_ops, env_ops, all")
+
+    # --- Plan ---
+    p = subparsers.add_parser("plan", help="Multi-step planner agent")
+    p.add_argument("goal")
+    p.add_argument("--constraint", action="append", dest="constraint",
+                   help="Add a constraint (repeat for multiple)")
+    p.add_argument("--steps", action="append",
+                   help="Custom step descriptions (repeat for multiple)")
+    p.add_argument("--execute", action="store_true", help="Execute the plan after creation")
+    p.add_argument("--metrics", action="store_true", help="Show plan metrics")
+    p.add_argument("--name", default="Planner")
+
+    # --- Build ---
+    p = subparsers.add_parser("build", help="Code generation / review / refactor agent")
+    p.add_argument("prompt", nargs="?", default="", help="Code generation prompt")
+    p.add_argument("--language", "-l", help="Programming language (default: python)")
+    p.add_argument("--review", help="Review code in this file")
+    p.add_argument("--refactor", help="Refactor code in this file")
+    p.add_argument("--strategy", default="extract",
+                   choices=["extract", "inline", "rename", "split"],
+                   help="Refactoring strategy (default: extract)")
+    p.add_argument("--name", default="Builder")
+
+    # --- Chat ---
+    p = subparsers.add_parser("chat", help="Interactive chat")
+    p.add_argument("model", nargs="?", default="model.gguf")
+
+    # --- Server ---
+    p = subparsers.add_parser("server", help="Start API server")
+    p.add_argument("--host")
+    p.add_argument("--port", type=int)
+
+    args = parser.parse_args()
+
+    if args.version:
+        print(f"mito v{VERSION}")
+        return
+
+    if args.list or not args.command:
+        cmd_list(args)
+        return
+
+    if hasattr(args, 'prompt') and isinstance(args.prompt, list):
+        args.prompt = " ".join(args.prompt)
+    if hasattr(args, 'text') and isinstance(args.text, list):
+        args.text = " ".join(args.text)
+    if hasattr(args, 'context') and isinstance(args.context, list):
+        args.context = " ".join(args.context)
+
+    commands = {
+        "llama": cmd_llama,
+        "ocr": cmd_ocr,
+        "textgen": cmd_textgen,
+        "classify": cmd_classify,
+        "sentiment": cmd_sentiment,
+        "speech": cmd_speech,
+        "translate": cmd_translate,
+        "embed": cmd_embed,
+        "summarize": cmd_summarize,
+        "qa": cmd_qa,
+        "tts": cmd_tts,
+        "rag": cmd_rag,
+        "agent": cmd_agent,
+        "lrs-agent": cmd_lrs_agent,
+        "plan": cmd_plan,
+        "build": cmd_build,
+        "chat": cmd_chat,
+        "server": cmd_server,
+    }
+
+    if args.command in commands:
+        try:
+            commands[args.command](args)
+        except Exception as e:
+            import traceback
+            print(f"Error: {e}", file=sys.stderr)
+            if "--verbose" in sys.argv or getattr(args, 'verbose', False):
+                traceback.print_exc()
+            sys.exit(1)
+    else:
+        parser.print_help()
+
+
+if __name__ == "__main__":
+    main()

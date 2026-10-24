@@ -1,0 +1,117 @@
+# ATLAS Cognitive Layer Configuration
+
+version: “1.0.0”
+platform: “ATLAS”
+
+cognitive_layers:
+
+- id: 1
+  name: “Perception & Validation”
+  description: “Input/output verification and sensory processing”
+  capabilities:
+  - input_validation
+  - output_verification
+  - data_sanitation
+  - format_checking
+    prompt_templates:
+  - perception_validator_v1
+  - input_sanitizer_v1
+  - output_formatter_v1
+    resource_allocation:
+    cpu_priority: high
+    memory_limit: “512MB”
+    timeout_seconds: 5
+- id: 2
+  name: “Tool Orchestration Engine”
+  description: “Action execution and tool coordination”
+  capabilities:
+  - api_integration
+  - tool_selection
+  - action_execution
+  - error_recovery
+    prompt_templates:
+  - tool_selector_v2
+  - api_orchestrator_v2
+  - error_handler_v1
+    resource_allocation:
+    cpu_priority: high
+    memory_limit: “1GB”
+    timeout_seconds: 30
+- id: 3
+  name: “Working Memory Manager”
+  description: “Context synthesis and information integration”
+  capabilities:
+  - context_assembly
+  - memory_compression
+  - relevance_filtering
+  - semantic_indexing
+    prompt_templates:
+  - context_synthesizer_v3
+  - memory_compressor_v2
+  - relevance_scorer_v1
+    resource_allocation:
+    cpu_priority: medium
+    memory_limit: “2GB”
+    timeout_seconds: 15
+- id: 4
+  name: “Executive Planner”
+  description: “Task decomposition and strategic planning”
+  capabilities:
+  - task_decomposition
+  - strategy_formulation
+  - resource_planning
+  - dependency_analysis
+    prompt_templates:
+  - task_decomposer_v3
+  - strategic_planner_v2
+  - dependency_analyzer_v1
+    resource_allocation:
+    cpu_priority: medium
+    memory_limit: “1GB”
+    timeout_seconds: 20
+- id: 5
+  name: “Meta-Cognitive Director”
+  description: “Strategic oversight and self-improvement”
+  capabilities:
+  - goal_alignment
+  - performance_monitoring
+  - self_reflection
+  - strategy_adjustment
+    prompt_templates:
+  - meta_director_v2
+  - alignment_checker_v1
+  - performance_analyzer_v2
+    resource_allocation:
+    cpu_priority: low
+    memory_limit: “512MB”
+    timeout_seconds: 10
+
+# Layer Communication Protocols
+
+communication_protocols:
+inter_layer_messaging:
+format: “json”
+encryption: true
+max_message_size: “10MB”
+
+escalation_rules:
+- from_layer: 1
+to_layer: 2
+condition: “validation_failure”
+- from_layer: 2
+to_layer: 3
+condition: “context_needed”
+- from_layer: 3
+to_layer: 4
+condition: “planning_required”
+- from_layer: 4
+to_layer: 5
+condition: “strategic_decision_needed”
+
+# Performance Thresholds
+
+performance_thresholds:
+minimum_success_rate: 0.75
+maximum_latency_ms: 5000
+memory_warning_threshold: 0.85
+cpu_warning_threshold: 0.90

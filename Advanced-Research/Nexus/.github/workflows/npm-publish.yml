@@ -1,0 +1,49 @@
+# This workflow validates the package, creates the distributable .tgz install file,
+# keeps it as a workflow artifact, and publishes the exact packed artifact to npm.
+
+name: npm Package
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org/
+      - run: npm ci
+      - run: npm test
+      - run: mkdir -p dist && npm pack --pack-destination dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: npm-package
+          path: dist/*.tgz
+          if-no-files-found: error
+
+  publish-npm:
+    if: github.event_name == 'release'
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org/
+      - uses: actions/download-artifact@v4
+        with:
+          name: npm-package
+          path: dist
+      - run: npm publish dist/*.tgz --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN || secrets.npm_token }}
