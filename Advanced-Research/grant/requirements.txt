@@ -3,11 +3,11 @@
 
 # Core ML/AI
 numpy>=1.20.0,<2.0.0
-torch>=2.0.0
+torch>=2.13.0
 torchvision>=0.15.0
 
 #  GPU support (uncomment if needed)
-torch==2.8.0  # CUDA 11.8
+torch==2.13.0  # CUDA 11.8
 torchvision==0.15.0+cu118
 
 # Development tools
